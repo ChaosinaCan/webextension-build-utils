@@ -1,6 +1,6 @@
 {
   "name": "@spadin/webextension-build-utils",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "webpack build utilities for webextension-toolbox",
   "main": "dist/index.js",
   "scripts": {
