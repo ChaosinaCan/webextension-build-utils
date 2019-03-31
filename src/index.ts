@@ -4,6 +4,7 @@ import { Configuration } from 'webpack';
 import CopyPlugin from 'copy-webpack-plugin';
 import DuplicatePackageCheckerPlugin from 'duplicate-package-checker-webpack-plugin';
 import GlobEntriesPlugin  from 'webpack-watched-glob-entries-plugin';
+import LicenseCheckerPlugin from 'license-checker-webpack-plugin';
 import ZipPlugin from 'zip-webpack-plugin';
 
 /**
@@ -66,6 +67,23 @@ export function dedupeModules(config: Configuration, modules: string[], folder: 
     if (!config.plugins.some(p => p instanceof DuplicatePackageCheckerPlugin)) {
         config.plugins.push(new DuplicatePackageCheckerPlugin());
     }
+}
+
+/**
+ *
+ * @param config Webpack config to update.
+ * @param allow List of allowed licenses.
+ * @param outFile Output filename for license info.
+ */
+export function useLicenseChecker(config: Configuration, allow: string[], outFile: string = 'ThirdPartyNotices.txt') {
+    const allowedLicenses = allow.join(' OR ');
+
+    config.plugins = config.plugins || [];
+
+    config.plugins.push(new LicenseCheckerPlugin({
+        outputFilename: outFile,
+        allow: `(${allowedLicenses})`,
+    }));
 }
 
 /**
