@@ -1,10 +1,10 @@
 
-import * as path from 'path';
-import { Configuration } from 'webpack';
 import CopyPlugin from 'copy-webpack-plugin';
 import DuplicatePackageCheckerPlugin from 'duplicate-package-checker-webpack-plugin';
-import GlobEntriesPlugin  from 'webpack-watched-glob-entries-plugin';
 import LicenseCheckerPlugin from 'license-checker-webpack-plugin';
+import * as path from 'path';
+import { Configuration } from 'webpack';
+import GlobEntriesPlugin from 'webpack-watched-glob-entries-plugin';
 import ZipPlugin from 'zip-webpack-plugin';
 
 /**
@@ -20,7 +20,7 @@ export function fixZipPackage(config: Configuration) {
 
     // When we are installed via npm link, webextension-toolbox has a different
     // copy of zip-webpack-plugin than we do, so match on class name too.
-    const isZipPlugin = (x: any) => (x instanceof ZipPlugin || x.constructor.name == 'ZipPlugin');
+    const isZipPlugin = (x: any) => (x instanceof ZipPlugin || x.constructor.name === 'ZipPlugin');
 
     // Move any ZipPlugin to the end.
     config.plugins = config.plugins.sort((a, b) => {
@@ -32,7 +32,7 @@ export function fixZipPackage(config: Configuration) {
 }
 
 export function getDedupeAliases(modules: string[], folder: string = './node_modules') {
-    let alias: Record<string, string> = {};
+    const alias: Record<string, string> = {};
 
     for (const mod of modules) {
         alias[mod] = path.resolve(path.join(folder, mod));
@@ -52,13 +52,14 @@ export function getDedupeAliases(modules: string[], folder: string = './node_mod
  * @param base Directory where versions of modules to use live.
  */
 export function dedupeModules(config: Configuration, modules: string[], folder: string = './node_modules') {
+    // tslint:disable-next-line: max-line-length
     // https://medium.com/@penx/managing-dependencies-in-a-node-package-so-that-they-are-compatible-with-npm-link-61befa5aaca7
     config.resolve = config.resolve || {};
 
     config.resolve.alias = {
         ...config.resolve.alias,
         ...getDedupeAliases(modules, folder),
-    }
+    };
 
     // Make sure the deduped modules are compatible versions.
     // Otherwise deduping could break things.
@@ -81,8 +82,8 @@ export function useLicenseChecker(config: Configuration, allow: string[], outFil
     config.plugins = config.plugins || [];
 
     config.plugins.push(new LicenseCheckerPlugin({
-        outputFilename: outFile,
         allow: `(${allowedLicenses})`,
+        outputFilename: outFile,
     }));
 }
 
@@ -98,9 +99,9 @@ export function useSourceMap(config: Configuration, dev: boolean) {
 
         config.module = config.module || { rules: [] };
         config.module.rules.push({
+            enforce: 'pre',
             test: /\.js$/,
             use: ['source-map-loader'],
-            enforce: 'pre',
         });
 
     } else {
@@ -126,14 +127,14 @@ export interface TypeScriptOptions {
  * @param options TypeScript compilation options.
  */
 export function useTypescript(config: Configuration, options?: TypeScriptOptions) {
-    const options_ = {
+    const tsOptions = {
         entryPaths: [
-            path.resolve(config.context || 'app', '**')
+            path.resolve(config.context || 'app', '**'),
         ],
         modules: ['./node_modules'],
         tsConfigFile: 'tsconfig.json',
         ...options,
-    }
+    };
 
     // Add support for .ts(x) entry points.
     config.resolve = config.resolve || {};
@@ -142,28 +143,28 @@ export function useTypescript(config: Configuration, options?: TypeScriptOptions
 
     config.resolve.extensions.push('.ts');
     config.resolve.extensions.push('.tsx');
-    config.resolve.modules = [...config.resolve.modules, ...options_.modules];
+    config.resolve.modules = [...config.resolve.modules, ...tsOptions.modules];
 
     // This overwrites webextension-toolbox's entry, so we need to handle
     // regular JavaScript files too.
-    const ENTRY_FILES = '*.{js,mjs,jsx,ts,tsx}'
+    const ENTRY_FILES = '*.{js,mjs,jsx,ts,tsx}';
     config.entry = GlobEntriesPlugin.getEntries(
-        options_.entryPaths.map(p => path.resolve(p, ENTRY_FILES))
+        tsOptions.entryPaths.map(p => path.resolve(p, ENTRY_FILES)),
     );
 
     // Add loaders to typescript and tslint
     config.module = config.module || { rules: [] };
 
     config.module.rules.push({
-        test: /\.(ts|tsx)$/,
         enforce: 'pre',
+        test: /\.(ts|tsx)$/,
         use: [{
             loader: 'tslint-loader',
             options: {
-                tsConfigFile: options_.tsConfigFile,
                 emitErrors: true,
+                tsConfigFile: tsOptions.tsConfigFile,
             },
-        }]
+        }],
     });
 
     config.module.rules.push({
@@ -188,9 +189,9 @@ interface CssOptions {
  * @param options CSS bundling options.
  */
 export function useCss(config: Configuration, options?: CssOptions) {
-    const options_ = {
-        optimizeImages: true,
+    const cssOptions = {
         imagePath: 'images',
+        optimizeImages: true,
         ...options,
     };
 
@@ -211,14 +212,14 @@ export function useCss(config: Configuration, options?: CssOptions) {
         use: [{
             loader: 'file-loader',
             options: {
-                outputPath: `${options_.imagePath}/`,
-                publicPath: `/${options_.imagePath}/`,
+                outputPath: `${cssOptions.imagePath}/`,
+                publicPath: `/${cssOptions.imagePath}/`,
             },
         }, {
             loader: 'image-webpack-loader',
             options: {
-                disable: !options_.optimizeImages,
-            }
+                disable: !cssOptions.optimizeImages,
+            },
         }],
     });
 }
@@ -247,7 +248,7 @@ export interface ExternalDefinition {
  */
 export function useExternal(config: Configuration, def: ExternalDefinition) {
     const external = {
-        [def.module]: def.global
+        [def.module]: def.global,
     };
 
     if (config.externals) {
@@ -265,9 +266,9 @@ export function useExternal(config: Configuration, def: ExternalDefinition) {
     if (def.from && def.to) {
         config.plugins.push(new CopyPlugin([
             {
+                cache: true,
                 from: def.from,
                 to: def.to,
-                cache: true
             },
         ]));
     }
