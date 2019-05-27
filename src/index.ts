@@ -175,7 +175,7 @@ export function useTypescript(config: Configuration, options?: TypeScriptOptions
     });
 }
 
-interface CssOptions {
+interface ImageOptions {
     /** Reduce image sizes? Default: true */
     optimizeImages?: boolean;
     /** Path to store images in build directory. Default = images */
@@ -183,42 +183,32 @@ interface CssOptions {
 }
 
 /**
- * Adds support for bundling CSS style sheets and any images referenced by them.
+ * Adds support for bundling images referenced by style sheets.
  *
  * @param config Webpack config to update.
- * @param options CSS bundling options.
+ * @param options Image bundling options.
  */
-export function useCss(config: Configuration, options?: CssOptions) {
-    const cssOptions = {
+export function useImages(config: Configuration, options?: ImageOptions) {
+    const imgOptions = {
         imagePath: 'images',
         optimizeImages: true,
         ...options,
     };
 
-    // Add css support
     config.module = config.module || { rules: [] };
 
-    config.module.rules.push({
-        test: /\.css$/,
-        use: [
-            { loader: 'style-loader' },
-            { loader: 'css-loader' },
-        ],
-    });
-
-    // Add image support
     config.module.rules.push({
         test: /\.(bmp|gif|jpg|jpeg|png|svg|tif|tiff|webp)$/,
         use: [{
             loader: 'file-loader',
             options: {
-                outputPath: `${cssOptions.imagePath}/`,
-                publicPath: `/${cssOptions.imagePath}/`,
+                outputPath: `${imgOptions.imagePath}/`,
+                publicPath: `/${imgOptions.imagePath}/`,
             },
         }, {
             loader: 'image-webpack-loader',
             options: {
-                disable: !cssOptions.optimizeImages,
+                disable: !imgOptions.optimizeImages,
             },
         }],
     });
